@@ -69,7 +69,7 @@ def listoftime():
 def Download():
     ListofDate=listoftime()
     Timer=0
-    os.chdir("C:\Users\J\Desktop\lastfm\\raw_data")
+    os.chdir(".\\raw_data")
     for CDate in range(len(ListofDate)):
         if os.path.exists(str(ListofDate[CDate][1])+'.csv')==False:
             f = open(str(ListofDate[CDate][1])+'.csv', 'w')
