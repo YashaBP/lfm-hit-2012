@@ -3,7 +3,7 @@ from time import sleep
 import datetime
 import urllib
 import re
-import os
+#import os
 
 # You have to have your own unique two values for API_KEY and API_SECRET
 # Obtain yours from http://www.last.fm/api/account for Last.fm
@@ -39,8 +39,8 @@ def retriveDates():
     html_page = ufile.read()
     tmpList = re.findall(r'<chart from="([0-9]+)" to="[0-9]+"/>',html_page)
     return tmpList
-def reprunicode(u):
-    return repr(u).decode('raw_unicode_escape')
+#def reprunicode(u):
+#    return repr(u).decode('raw_unicode_escape')
 
 LIST_OF_Metroes=retriveListOfMetroes()
 #LIST_OF_COUNTRIES=retriveListOfCountries()
@@ -69,10 +69,10 @@ def listoftime():
 def Download():
     ListofDate=listoftime()
     Timer=0
-    os.chdir(".\\raw_data")
+#    os.chdir(".\\raw_data")
     for CDate in range(len(ListofDate)):
         if os.path.exists(str(ListofDate[CDate][1])+'.csv')==False:
-            f = open(str(ListofDate[CDate][1])+'.csv', 'w')
+            f = open(str(".\\raw_data\\"+ListofDate[CDate][1])+'.csv', 'w')
             for CurrentMetro in LIST_OF_Metroes:
                 urlm = str("http://ws.audioscrobbler.com/2.0/?method=geo.getmetrotrackchart&country="+str(CurrentMetro[1])+"&metro="+str(CurrentMetro[0])+"&start="+str(ListofDate[CDate][0])+"&end="+str(ListofDate[CDate+1][0])+"&limit=20&api_key=e09f752b88d2e0d7d71b8f178d931970")
                 ufile = urllib.urlopen(urlm)
