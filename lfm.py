@@ -80,6 +80,7 @@ def Download():
         else:
             Timer+=214
             print ListofDate[CDate][1]     
+
 #Download()
 #GUI part
 class MainWindow(wx.Frame):
@@ -87,6 +88,7 @@ class MainWindow(wx.Frame):
         super(MainWindow, self).__init__(*args, **kw) 
         self.InitUI()
     def InitUI(self):
+        self.numberOfFilesToDownload = 0
         pnl = wx.Panel(self)
         #creating sizers
         verticalBox = wx.BoxSizer(wx.VERTICAL)
@@ -100,7 +102,13 @@ class MainWindow(wx.Frame):
         self.text1 = wx.StaticText(pnl,label="\nPlease select weeks range in format <yyyyww>")
         self.text2 = wx.StaticText(pnl,label="Beginning from:\t")
         self.text3 = wx.StaticText(pnl,label="\tEnding on:")
-
+        self.gauge = wx.Gauge(pnl, range = self.numberOfFilesToDownload,size = (480,30))
+        self.actionTxt = wx.StaticText(pnl, label ="Current action:\t")
+        self.actionDetailsTxt = wx.StaticText(pnl, label = "waiting for action...")
+        self.downloadBtn = wx.Button(pnl,id=wx.ID_DOWN, label = "Download")
+        self.stopBtn = wx.Button(pnl,id=wx.ID_CANCEL, label = "Stop")
+        self.mergeBtn = wx.Button(pnl,id=wx.ID_REFRESH,label = "Merge to 'table.csv'")
+        self.uploadBtn = wx.Button(pnl,id=wx.ID_UP, label = "Upload to fusion tables")
         #Text Controls
         self.fromTextBox = wx.TextCtrl(pnl,style = wx.TE_CENTRE)
         self.endTextBox = wx.TextCtrl(pnl, style = wx.TE_CENTRE)
@@ -110,18 +118,36 @@ class MainWindow(wx.Frame):
         horizontalBox2.Add(self.fromTextBox,proportion=1)
         horizontalBox2.Add(self.text3,proportion=1,flag = wx.ALIGN_CENTRE)
         horizontalBox2.Add(self.endTextBox, proportion=1)
+        horizontalBox3.Add(self.gauge, proportion=1, flag = wx.ALIGN_CENTRE)
+        horizontalBox4.Add(self.actionTxt,proportion=1, flag = wx.ALIGN_CENTRE)
+        horizontalBox4.Add(self.actionDetailsTxt,proportion=1, flag = wx.ALIGN_CENTRE)
+        horizontalBox5.Add(self.downloadBtn,proportion=0.25, flag = wx.ALIGN_CENTRE)
+        horizontalBox5.Add(self.stopBtn,proportion=0.25, flag = wx.ALIGN_CENTRE)
+        horizontalBox5.Add(self.mergeBtn,proportion=0.25, flag = wx.ALIGN_CENTRE)
+        horizontalBox5.Add(self.uploadBtn,proportion=0.25, flag = wx.ALIGN_CENTRE)
+
         verticalBox.Add(horizontalBox1,flag = wx.ALIGN_CENTRE)
-        verticalBox.Add((0,20))
+        verticalBox.Add((0,20))#blank line
         verticalBox.Add(horizontalBox2,flag = wx.ALIGN_CENTRE)
+        verticalBox.Add((0,10))#blank line
+        verticalBox.Add(horizontalBox3,flag = wx.ALIGN_CENTRE)
+        verticalBox.Add((0,10))#blank line
+        verticalBox.Add(horizontalBox4,flag = wx.ALIGN_CENTRE)
+        verticalBox.Add((0,20))#blank line
+        verticalBox.Add(horizontalBox5,flag = wx.ALIGN_CENTRE)
         #setting main panel sizer
         pnl.SetSizer(verticalBox)
+        #Binding button events
+        self.Bind(wx.EVT_BUTTON, self.onDownloadPressed, self.downloadBtn)
+        
         #window properties
-        self.SetSize((500,300))
+        self.SetSize((500,230))
         self.SetTitle("Last.fm downloader")
         self.Centre()
         self.Show(True)
-
-
+    def onDownloadPressed(self,btnEvent):
+        self.actionDetailsTxt.SetLabel("Download press test")
+        
 
 
 
