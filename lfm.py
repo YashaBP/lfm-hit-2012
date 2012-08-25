@@ -32,11 +32,9 @@ def retriveDates():
     tmpList = re.findall(r'<chart from="([0-9]+)" to="[0-9]+"/>',html_page)
     return tmpList
 
-
-LIST_OF_Metroes=retriveListOfMetroes()
-
 def listoftime():
     List_of_Dates=retriveDates()
+    LIST_OF_Metroes=retriveListOfMetroes()
     try:
         ListofDate
     except NameError:
