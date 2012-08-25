@@ -34,8 +34,6 @@ def retriveDates():
 
 
 LIST_OF_Metroes=retriveListOfMetroes()
-Timer=0
-
 
 def listoftime():
     List_of_Dates=retriveDates()
@@ -56,25 +54,38 @@ def listoftime():
     ListofDate=zip(List_of_Dates,NameDate)
     return ListofDate
 
-def Download():
-    ListofDate=listoftime()
+def Download(Start,End):
+    ListofDates=listoftime()
     Timer=0
+    start,end=0,0
+    for CDate in range(len(ListofDates)):
+        if ListofDates[CDate][1]==int(Start):
+            start=CDate
+        if ListofDates[CDate][1]==int(End):
+            end=CDate+1
+    if start==0:
+        print "The start date is incorrect or non existant"
+    if end==0:
+        print "The end date is incorrect or non existant"
+    ListofDate=ListofDates[start:end]
+    if not os.path.exists('raw_data'):
+        os.makedirs('raw_data')  
     for CDate in range(len(ListofDate)):
-        if os.path.exists('.\\raw_data\\'+str(ListofDate[CDate][1])+'.csv')==False:
-            f = open('.\\raw_data\\'+str(ListofDate[CDate][1])+'.csv', 'w')
+        CurrentName='.\\raw_data\\'+str(ListofDate[CDate][1])+'.csv'
+        Timer+=1
+        if os.path.exists(CurrentName)==False:
+            f = open(CurrentName, 'w')
             for CurrentMetro in LIST_OF_Metroes:
                 urlm = str("http://ws.audioscrobbler.com/2.0/?method=geo.getmetrotrackchart&country="+str(CurrentMetro[1])+"&metro="+str(CurrentMetro[0])+"&start="+str(ListofDate[CDate][0])+"&end="+str(int(ListofDate[CDate][0])+604800)+"&limit=20&api_key="+str(API_KEY))
                 ufile = urllib.urlopen(urlm)
                 sleep(1.1)
                 html_page = ufile.read()
                 tmpList = re.findall(u'<track rank="[\w]*">[.\s]*<name>(.+)</name>[.\s]*<duration>([0-9]+)</duration>[.\s]*<listeners>([0-9]*)</listeners>[^"]*.*[\s]*<artist>[\s]*<name>(.*)</name>',html_page)
-                Timer+=1
                 if tmpList:
                     for i in range(len(tmpList)):
                         f.write(str(ListofDate[CDate][1])+' , '+'"'+tmpList[i][0]+'"'+' , '+'"'+tmpList[i][3]+'"'+' , '+duration2min(tmpList[i][1])+' , '+str(i+1)+' , '+str(tmpList[i][2])+' , '+'"'+CurrentMetro[0]+'"'+' , '+'"'+CurrentMetro[1]+'"'+'\n')
             f.close()
         else:
-            Timer+=214
             print ListofDate[CDate][1]
         
            
