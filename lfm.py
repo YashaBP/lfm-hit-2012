@@ -10,10 +10,6 @@ API_SECRET = "8562cb7ab597776e0f92cabf6fc19dda"
 Metro_URL = "http://ws.audioscrobbler.com/2.0/?method=geo.getmetros&api_key="+API_KEY
 Dates_URL = "http://ws.audioscrobbler.com/2.0/?method=geo.getmetroweeklychartlist&api_key="+API_KEY
 
-
-
-
-
 def duration2min(time):
     totalTime = int(time)/60
     seconds = int(time)%60
@@ -35,17 +31,11 @@ def retriveDates():
     tmpList = re.findall(r'<chart from="([0-9]+)" to="[0-9]+"/>',html_page)
     return tmpList
 
-
-<<<<<<< HEAD
-
 Timer=0
-
-=======
-LIST_OF_Metroes=retriveListOfMetroes()
->>>>>>> c94055d4399b9cc725252ef8cd90c83d2d50e9f7
 
 def listoftime():
     List_of_Dates=retriveDates()
+    LIST_OF_Metroes=retriveListOfMetroes()
     try:
         ListofDate
     except NameError:
@@ -63,14 +53,9 @@ def listoftime():
     ListofDate=zip(List_of_Dates,NameDate)
     return ListofDate
 
-<<<<<<< HEAD
-def Download():
+def Download(Start,End):
     LIST_OF_Metroes=retriveListOfMetroes()
     ListofDate=listoftime()
-=======
-def Download(Start,End):
-    ListofDates=listoftime()
->>>>>>> c94055d4399b9cc725252ef8cd90c83d2d50e9f7
     Timer=0
     start,end=0,0
     for CDate in range(len(ListofDates)):
@@ -101,7 +86,6 @@ def Download(Start,End):
                         f.write(str(ListofDate[CDate][1])+' , '+'"'+tmpList[i][0]+'"'+' , '+'"'+tmpList[i][3]+'"'+' , '+duration2min(tmpList[i][1])+' , '+str(i+1)+' , '+str(tmpList[i][2])+' , '+'"'+CurrentMetro[0]+'"'+' , '+'"'+CurrentMetro[1]+'"'+'\n')
             f.close()
         else:
-<<<<<<< HEAD
             Timer+=214
             print ListofDate[CDate][1]     
 
@@ -171,31 +155,7 @@ class MainWindow(wx.Frame):
         self.Show(True)
     def onDownloadPressed(self,btnEvent):
         self.actionDetailsTxt.SetLabel("Download press test")
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-=======
-            print ListofDate[CDate][1]
->>>>>>> c94055d4399b9cc725252ef8cd90c83d2d50e9f7
-        
+             
 
 app = wx.App()
 MainWindow(None)
