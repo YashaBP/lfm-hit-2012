@@ -9,7 +9,7 @@ API_KEY =    "e09f752b88d2e0d7d71b8f178d931970"
 API_SECRET = "8562cb7ab597776e0f92cabf6fc19dda"
 Metro_URL = "http://ws.audioscrobbler.com/2.0/?method=geo.getmetros&api_key="+API_KEY
 Dates_URL = "http://ws.audioscrobbler.com/2.0/?method=geo.getmetroweeklychartlist&api_key="+API_KEY
-
+  
 def duration2min(time):
     totalTime = int(time)/60
     seconds = int(time)%60
@@ -20,18 +20,16 @@ def duration2min(time):
     return ans
 def retriveListOfMetroes():
     ufile = urllib.urlopen(Metro_URL)
-    sleep(2)
+    sleep(1)
     html_page = ufile.read()
     tmpList = re.findall(ur"<name>(.+)</name>[\s]*<country>(.+)</country>",html_page)
     return tmpList
 def retriveDates():
     ufile = urllib.urlopen(Dates_URL)
-    sleep(2)
+    sleep(1)
     html_page = ufile.read()
     tmpList = re.findall(r'<chart from="([0-9]+)" to="[0-9]+"/>',html_page)
     return tmpList
-
-Timer=0
 
 def listoftime():
     List_of_Dates=retriveDates()
@@ -53,9 +51,13 @@ def listoftime():
     ListofDate=zip(List_of_Dates,NameDate)
     return ListofDate
 
-def Download(Start,End):
+def Download(Start,End,statusTxt,gaugeObject):
+    statusTxt.SetLabel("Retrieving list of metros")
     LIST_OF_Metroes=retriveListOfMetroes()
-    ListofDate=listoftime()
+    gaugeObject.SetValue(1)
+    statusTxt.SetLabel("Retrieving list of available weeks")
+    ListofDates=listoftime()
+    gaugeObject.SetValue(2)
     Timer=0
     start,end=0,0
     for CDate in range(len(ListofDates)):
@@ -68,11 +70,14 @@ def Download(Start,End):
     if end==0:
         print "The end date is incorrect or non existant"
     ListofDate=ListofDates[start:end]
-    if not os.path.exists('raw_data'):
+    print ListofDates
+    '''if not os.path.exists('raw_data'):
         os.makedirs('raw_data')  
     for CDate in range(len(ListofDate)):
         CurrentName='.\\raw_data\\'+str(ListofDate[CDate][1])+'.csv'
+        statusTxt.SetLabel("downloading "+CurrentName)
         Timer+=1
+        gaugeObject.SetValue(Timer)
         if os.path.exists(CurrentName)==False:
             f = open(CurrentName, 'w')
             for CurrentMetro in LIST_OF_Metroes:
@@ -87,9 +92,8 @@ def Download(Start,End):
             f.close()
         else:
             Timer+=214
-            print ListofDate[CDate][1]     
+            print ListofDate[CDate][1]     '''
 
-#Download()
 #GUI part
 class MainWindow(wx.Frame):
     def __init__(self, *args, **kw):
@@ -154,7 +158,11 @@ class MainWindow(wx.Frame):
         self.Centre()
         self.Show(True)
     def onDownloadPressed(self,btnEvent):
-        self.actionDetailsTxt.SetLabel("Download press test")
+        start = int(self.fromTextBox.GetValue())
+        end = int(self.endTextBox.GetValue())
+        self.numberOfFilesToDownload = end - start
+        self.gauge.SetRange(self.numberOfFilesToDownload+2)
+        Download(start,end,self.actionDetailsTxt,self.gauge)
              
 
 app = wx.App()
