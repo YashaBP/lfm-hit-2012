@@ -6,7 +6,7 @@ import os
 
 # You have to have your own unique two values for API_KEY and API_SECRET
 # Obtain yours from http://www.last.fm/api/account for Last.fm
-API_KEY =    "e09f752b88d2e0d7d71b8f178d931970" # this is a sample key
+API_KEY =    "e09f752b88d2e0d7d71b8f178d931970" 
 API_SECRET = "8562cb7ab597776e0f92cabf6fc19dda"
 Metro_URL = "http://ws.audioscrobbler.com/2.0/?method=geo.getmetros&api_key="+API_KEY
 Dates_URL = "http://ws.audioscrobbler.com/2.0/?method=geo.getmetroweeklychartlist&api_key="+API_KEY
