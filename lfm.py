@@ -4,6 +4,7 @@ import urllib
 import re
 import os
 import wx
+import thread
 
 API_KEY =    "e09f752b88d2e0d7d71b8f178d931970" 
 API_SECRET = "8562cb7ab597776e0f92cabf6fc19dda"
@@ -51,48 +52,6 @@ def listoftime():
     ListofDate=zip(List_of_Dates,NameDate)
     return ListofDate
 
-def Download(Start,End,statusTxt,gaugeObject):
-    statusTxt.SetLabel("Retrieving list of metros")
-    LIST_OF_Metroes=retriveListOfMetroes()
-    gaugeObject.SetValue(1)
-    statusTxt.SetLabel("Retrieving list of available weeks")
-    ListofDates=listoftime()
-    gaugeObject.SetValue(2)
-    Timer=0
-    start,end=0,0
-    for CDate in range(len(ListofDates)):
-        if ListofDates[CDate][1]==int(Start):
-            start=CDate
-        if ListofDates[CDate][1]==int(End):
-            end=CDate+1
-    if start==0:
-        print "The start date is incorrect or non existant"
-    if end==0:
-        print "The end date is incorrect or non existant"
-    ListofDate=ListofDates[start:end]
-    print ListofDates
-    '''if not os.path.exists('raw_data'):
-        os.makedirs('raw_data')  
-    for CDate in range(len(ListofDate)):
-        CurrentName='.\\raw_data\\'+str(ListofDate[CDate][1])+'.csv'
-        statusTxt.SetLabel("downloading "+CurrentName)
-        Timer+=1
-        gaugeObject.SetValue(Timer)
-        if os.path.exists(CurrentName)==False:
-            f = open(CurrentName, 'w')
-            for CurrentMetro in LIST_OF_Metroes:
-                urlm = str("http://ws.audioscrobbler.com/2.0/?method=geo.getmetrotrackchart&country="+str(CurrentMetro[1])+"&metro="+str(CurrentMetro[0])+"&start="+str(ListofDate[CDate][0])+"&end="+str(int(ListofDate[CDate][0])+604800)+"&limit=20&api_key="+str(API_KEY))
-                ufile = urllib.urlopen(urlm)
-                sleep(1.1)
-                html_page = ufile.read()
-                tmpList = re.findall(u'<track rank="[\w]*">[.\s]*<name>(.+)</name>[.\s]*<duration>([0-9]+)</duration>[.\s]*<listeners>([0-9]*)</listeners>[^"]*.*[\s]*<artist>[\s]*<name>(.*)</name>',html_page)
-                if tmpList:
-                    for i in range(len(tmpList)):
-                        f.write(str(ListofDate[CDate][1])+' , '+'"'+tmpList[i][0]+'"'+' , '+'"'+tmpList[i][3]+'"'+' , '+duration2min(tmpList[i][1])+' , '+str(i+1)+' , '+str(tmpList[i][2])+' , '+'"'+CurrentMetro[0]+'"'+' , '+'"'+CurrentMetro[1]+'"'+'\n')
-            f.close()
-        else:
-            Timer+=214
-            print ListofDate[CDate][1]     '''
 
 #GUI part
 class MainWindow(wx.Frame):
@@ -100,7 +59,9 @@ class MainWindow(wx.Frame):
         super(MainWindow, self).__init__(*args, **kw) 
         self.InitUI()
     def InitUI(self):
-        self.numberOfFilesToDownload = 0
+        icon = wx.Icon('lastfm.ico', wx.BITMAP_TYPE_ICO)
+        self.SetIcon(icon)
+        #self.numberOfFilesToDownload = 0
         pnl = wx.Panel(self)
         #creating sizers
         verticalBox = wx.BoxSizer(wx.VERTICAL)
@@ -114,7 +75,7 @@ class MainWindow(wx.Frame):
         self.text1 = wx.StaticText(pnl,label="\nPlease select weeks range in format <yyyyww>")
         self.text2 = wx.StaticText(pnl,label="Beginning from:\t")
         self.text3 = wx.StaticText(pnl,label="\tEnding on:")
-        self.gauge = wx.Gauge(pnl, range = self.numberOfFilesToDownload,size = (480,30))
+        self.gauge = wx.Gauge(pnl, range = 0,size = (480,30))
         self.actionTxt = wx.StaticText(pnl, label ="Current action:\t")
         self.actionDetailsTxt = wx.StaticText(pnl, label = "waiting for action...")
         self.downloadBtn = wx.Button(pnl,id=wx.ID_DOWN, label = "Download")
@@ -133,11 +94,11 @@ class MainWindow(wx.Frame):
         horizontalBox3.Add(self.gauge, proportion=1, flag = wx.ALIGN_CENTRE)
         horizontalBox4.Add(self.actionTxt,proportion=1, flag = wx.ALIGN_CENTRE)
         horizontalBox4.Add(self.actionDetailsTxt,proportion=1, flag = wx.ALIGN_CENTRE)
+        horizontalBox4.Add((150,0))#empty box
         horizontalBox5.Add(self.downloadBtn,proportion=0.25, flag = wx.ALIGN_CENTRE)
         horizontalBox5.Add(self.stopBtn,proportion=0.25, flag = wx.ALIGN_CENTRE)
         horizontalBox5.Add(self.mergeBtn,proportion=0.25, flag = wx.ALIGN_CENTRE)
         horizontalBox5.Add(self.uploadBtn,proportion=0.25, flag = wx.ALIGN_CENTRE)
-
         verticalBox.Add(horizontalBox1,flag = wx.ALIGN_CENTRE)
         verticalBox.Add((0,20))#blank line
         verticalBox.Add(horizontalBox2,flag = wx.ALIGN_CENTRE)
@@ -158,13 +119,57 @@ class MainWindow(wx.Frame):
         self.Centre()
         self.Show(True)
     def onDownloadPressed(self,btnEvent):
-        start = int(self.fromTextBox.GetValue())
-        end = int(self.endTextBox.GetValue())
-        self.numberOfFilesToDownload = end - start
-        self.gauge.SetRange(self.numberOfFilesToDownload+2)
-        Download(start,end,self.actionDetailsTxt,self.gauge)
-             
-
-app = wx.App()
+        thread.start_new_thread(self.Download,(int(self.fromTextBox.GetValue()),int(self.endTextBox.GetValue())))
+    def Download(self,Start,End):
+        numberOfFilesToDownload = End - Start
+        wx.CallAfter(self.gauge.SetRange,numberOfFilesToDownload+2)
+        wx.CallAfter(self.actionDetailsTxt.SetLabel,"Retrieving list of available weeks")
+        wx.CallAfter(self.gauge.SetValue,1)
+        ListofDates=listoftime()
+        start,end=0,0
+        for CDate in range(len(ListofDates)):
+            if ListofDates[CDate][1]==int(Start):
+                start=CDate
+            if ListofDates[CDate][1]==int(End):
+                end=CDate+1
+        if start==0:
+            wx.MessageBox("The start date is incorrect or non existant","Error",wx.OK | wx.ICON_INFORMATION)
+        elif end==0:
+            wx.MessageBox("The end date is incorrect or non existant","Error",wx.OK | wx.ICON_INFORMATION)
+        else:
+            wx.CallAfter(self.actionDetailsTxt.SetLabel,"Retrieving list of metros")
+            LIST_OF_Metroes=retriveListOfMetroes()
+            wx.CallAfter(self.gauge.SetValue,2)
+            Timer=0            
+            ListofDate=ListofDates[start:end]
+            if not os.path.exists('raw_data'):
+                wx.CallAfter(self.actionDetailsTxt.SetLabel,"Creating raw_data directory")
+                os.makedirs('raw_data')  
+            for CDate in range(len(ListofDate)):
+                CurrentName='.\\raw_data\\'+str(ListofDate[CDate][1])+'.csv'
+                wx.CallAfter(self.actionDetailsTxt.SetLabel,"downloading and creating "+CurrentName)
+                Timer+=1
+                wx.CallAfter(self.gauge.SetValue,Timer)
+                if os.path.exists(CurrentName)==False:
+                    f = open(CurrentName, 'w')
+                    for CurrentMetro in LIST_OF_Metroes:
+                        urlm = str("http://ws.audioscrobbler.com/2.0/?method=geo.getmetrotrackchart&country="+str(CurrentMetro[1])+"&metro="+str(CurrentMetro[0])+"&start="+str(ListofDate[CDate][0])+"&end="+str(int(ListofDate[CDate][0])+604800)+"&limit=20&api_key="+str(API_KEY))
+                        ufile = urllib.urlopen(urlm)
+                        sleep(1.1)
+                        html_page = ufile.read()
+                        tmpList = re.findall(u'<track rank="[\w]*">[.\s]*<name>(.+)</name>[.\s]*<duration>([0-9]+)</duration>[.\s]*<listeners>([0-9]*)</listeners>[^"]*.*[\s]*<artist>[\s]*<name>(.*)</name>',html_page)
+                        if tmpList:
+                            for i in range(len(tmpList)):
+                                f.write(str(ListofDate[CDate][1])+' , '+'"'+tmpList[i][0]+'"'+' , '+'"'+tmpList[i][3]+'"'+' , '+duration2min(tmpList[i][1])+' , '+str(i+1)+' , '+str(tmpList[i][2])+' , '+'"'+CurrentMetro[0]+'"'+' , '+'"'+CurrentMetro[1]+'"'+'\n')
+                    f.close()
+                    wx.CallAfter(self.actionDetailsTxt.SetLabel,"Finished downloading: "+CurrentName)
+                    sleep(1)
+                else:
+                    wx.CallAfter(self.gauge.SetValue,Timer)
+                    wx.CallAfter(self.actionDetailsTxt.SetLabel,"File: "+CurrentName+" already exists! Skipping...")
+                    sleep(1)
+        wx.CallAfter(self.actionDetailsTxt.SetLabel,"Waiting for action")      
+        wx.CallAfter(self.gauge.SetValue,0)
+app = wx.App(redirect=False)
 MainWindow(None)
 app.MainLoop()
