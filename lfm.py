@@ -61,7 +61,6 @@ class MainWindow(wx.Frame):
     def InitUI(self):
         icon = wx.Icon('lastfm.ico', wx.BITMAP_TYPE_ICO)
         self.SetIcon(icon)
-        #self.numberOfFilesToDownload = 0
         pnl = wx.Panel(self)
         #creating sizers
         verticalBox = wx.BoxSizer(wx.VERTICAL)
