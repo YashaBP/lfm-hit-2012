@@ -61,6 +61,7 @@ class MainWindow(wx.Frame):
     def InitUI(self):
         icon = wx.Icon('lastfm.ico', wx.BITMAP_TYPE_ICO)
         self.SetIcon(icon)
+        self.stopBtnPressed = False
         pnl = wx.Panel(self)
         #creating sizers
         verticalBox = wx.BoxSizer(wx.VERTICAL)
@@ -93,7 +94,7 @@ class MainWindow(wx.Frame):
         horizontalBox3.Add(self.gauge, proportion=1, flag = wx.ALIGN_CENTRE)
         horizontalBox4.Add(self.actionTxt,proportion=1, flag = wx.ALIGN_CENTRE)
         horizontalBox4.Add(self.actionDetailsTxt,proportion=1, flag = wx.ALIGN_CENTRE)
-        horizontalBox4.Add((150,0))#empty box
+        horizontalBox4.Add((130,0))#empty box
         horizontalBox5.Add(self.downloadBtn,proportion=0.25, flag = wx.ALIGN_CENTRE)
         horizontalBox5.Add(self.stopBtn,proportion=0.25, flag = wx.ALIGN_CENTRE)
         horizontalBox5.Add(self.mergeBtn,proportion=0.25, flag = wx.ALIGN_CENTRE)
@@ -111,7 +112,9 @@ class MainWindow(wx.Frame):
         pnl.SetSizer(verticalBox)
         #Binding button events
         self.Bind(wx.EVT_BUTTON, self.onDownloadPressed, self.downloadBtn)
-        
+        self.Bind(wx.EVT_BUTTON, self.onStopPressed, self.stopBtn)
+        self.Bind(wx.EVT_BUTTON, self.onMergePressed,self.mergeBtn)
+        self.Bind(wx.EVT_BUTTON, self.onUploadPressed,self.uploadBtn)
         #window properties
         self.SetSize((500,230))
         self.SetTitle("Last.fm downloader")
@@ -124,10 +127,26 @@ class MainWindow(wx.Frame):
             thread.start_new_thread(self.Download,(start,end))
         except:
             wx.MessageBox("Empty start week or and of week","Error",wx.OK | wx.ICON_ERROR)
-        
+    def onStopPressed(self, btnEvent):
+        self.stopBtnPressed = True
+    def onMergePressed(self, btnEvent):
+        #merging all files from .\raw_data to .\table.csv
+        self.actionDetailsTxt.SetLabel("Merging to table.csv")
+        self.actionDetailsTxt.Update()
+        sleep(1)
+        self.actionDetailsTxt.SetLabel("Waiting for action")
+        #some logic here
+    def onUploadPressed(self, btnEvent):
+        #Upload .\table.csv to google fusion tables
+        self.actionDetailsTxt.SetLabel('Uploading to Google...')
+        self.actionDetailsTxt.Update()
+        sleep(2)
+        self.actionDetailsTxt.SetLabel("Waiting for action")
+        #some logic here        
     def Download(self,Start,End):
+        self.stopBtnPressed = False #when user clicks download, it is not possible that stop button pressed concurrently
         numberOfFilesToDownload = End - Start
-        wx.CallAfter(self.gauge.SetRange,numberOfFilesToDownload+1)
+        wx.CallAfter(self.gauge.SetRange,numberOfFilesToDownload+4)
         wx.CallAfter(self.actionDetailsTxt.SetLabel,"Retrieving list of available weeks")
         wx.CallAfter(self.gauge.SetValue,1)
         ListofDates=listoftime()
@@ -143,21 +162,24 @@ class MainWindow(wx.Frame):
             wx.MessageBox("The end date is incorrect or non existant","Error",wx.OK | wx.ICON_INFORMATION)
         else:
             wx.CallAfter(self.actionDetailsTxt.SetLabel,"Retrieving list of metros")
-            LIST_OF_Metroes=retriveListOfMetroes()
             wx.CallAfter(self.gauge.SetValue,2)
-            Timer=0            
+            LIST_OF_Metroes=retriveListOfMetroes()
+            Timer=2            
             ListofDate=ListofDates[start:end]
             if not os.path.exists('raw_data'):
                 wx.CallAfter(self.actionDetailsTxt.SetLabel,"Creating raw_data directory")
-                os.makedirs('raw_data')  
+                os.makedirs('raw_data')
+                sleep(2)
             for CDate in range(len(ListofDate)):
                 CurrentName='.\\raw_data\\'+str(ListofDate[CDate][1])+'.csv'
-                wx.CallAfter(self.actionDetailsTxt.SetLabel,"downloading and creating "+CurrentName)
                 Timer+=1
                 wx.CallAfter(self.gauge.SetValue,Timer)
                 if os.path.exists(CurrentName)==False:
                     f = open(CurrentName, 'w')
                     for CurrentMetro in LIST_OF_Metroes:
+                        wx.CallAfter(self.actionDetailsTxt.SetLabel,"downloading "+CurrentName+" metro: "+CurrentMetro[0])
+                        if self.stopBtnPressed:
+                            break
                         urlm = str("http://ws.audioscrobbler.com/2.0/?method=geo.getmetrotrackchart&country="+str(CurrentMetro[1])+"&metro="+str(CurrentMetro[0])+"&start="+str(ListofDate[CDate][0])+"&end="+str(int(ListofDate[CDate][0])+604800)+"&limit=20&api_key="+str(API_KEY))
                         ufile = urllib.urlopen(urlm)
                         sleep(1.1)
@@ -167,14 +189,26 @@ class MainWindow(wx.Frame):
                             for i in range(len(tmpList)):
                                 f.write(str(ListofDate[CDate][1])+' , '+'"'+tmpList[i][0]+'"'+' , '+'"'+tmpList[i][3]+'"'+' , '+duration2min(tmpList[i][1])+' , '+str(i+1)+' , '+str(tmpList[i][2])+' , '+'"'+CurrentMetro[0]+'"'+' , '+'"'+CurrentMetro[1]+'"'+'\n')
                     f.close()
-                    wx.CallAfter(self.actionDetailsTxt.SetLabel,"Finished downloading: "+CurrentName)
-                    sleep(1)
+                    if self.stopBtnPressed:
+                        wx.CallAfter(self.actionDetailsTxt.SetLabel,"Downloading stopped by user!!!")
+                        sleep(1.5)
+                        wx.CallAfter(self.actionDetailsTxt.SetLabel,"Deleting unfinished file: "+CurrentName)
+                        sleep(1)
+                        os.remove(CurrentName)
+                        wx.CallAfter(self.actionDetailsTxt.SetLabel,"Unfinished file: "+CurrentName+" deleted!!!")
+                        sleep(1.5)
+                        break
+                    else:
+                        wx.CallAfter(self.actionDetailsTxt.SetLabel,"Finished downloading: "+CurrentName)
+                        sleep(1.5)
                 else:
                     wx.CallAfter(self.gauge.SetValue,Timer)
                     wx.CallAfter(self.actionDetailsTxt.SetLabel,"File: "+CurrentName+" already exists! Skipping...")
                     sleep(1)
         wx.CallAfter(self.actionDetailsTxt.SetLabel,"Waiting for action")      
         wx.CallAfter(self.gauge.SetValue,0)
-app = wx.App(redirect=False)
-MainWindow(None)
-app.MainLoop()
+        self.stopBtnPressed = False
+if __name__=='__main__':
+    app = wx.App(redirect=False)
+    MainWindow(None)
+    app.MainLoop()
