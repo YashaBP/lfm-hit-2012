@@ -119,10 +119,16 @@ class MainWindow(wx.Frame):
         self.Centre()
         self.Show(True)
     def onDownloadPressed(self,btnEvent):
-        thread.start_new_thread(self.Download,(int(self.fromTextBox.GetValue()),int(self.endTextBox.GetValue())))
+        try:
+            start = int( self.fromTextBox.GetValue() )
+            end = int( self.endTextBox.GetValue() )
+            thread.start_new_thread(self.Download,(start,end))
+        except:
+            wx.MessageBox("Empty start week or and of week","Error",wx.OK | wx.ICON_ERROR)
+        
     def Download(self,Start,End):
         numberOfFilesToDownload = End - Start
-        wx.CallAfter(self.gauge.SetRange,numberOfFilesToDownload+2)
+        wx.CallAfter(self.gauge.SetRange,numberOfFilesToDownload+1)
         wx.CallAfter(self.actionDetailsTxt.SetLabel,"Retrieving list of available weeks")
         wx.CallAfter(self.gauge.SetValue,1)
         ListofDates=listoftime()
