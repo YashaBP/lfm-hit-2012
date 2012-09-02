@@ -10,6 +10,7 @@ API_KEY =    "e09f752b88d2e0d7d71b8f178d931970"
 API_SECRET = "8562cb7ab597776e0f92cabf6fc19dda"
 Metro_URL = "http://ws.audioscrobbler.com/2.0/?method=geo.getmetros&api_key="+API_KEY
 Dates_URL = "http://ws.audioscrobbler.com/2.0/?method=geo.getmetroweeklychartlist&api_key="+API_KEY
+RAW_DATA_PATH = ".\\raw_data\\"
   
 def duration2min(time):
     totalTime = int(time)/60
@@ -134,6 +135,14 @@ class MainWindow(wx.Frame):
         self.actionDetailsTxt.SetLabel("Merging to table.csv")
         self.actionDetailsTxt.Update()
         sleep(1)
+        fileList = os.listdir(RAW_DATA_PATH)
+        mergedFile = open(".\\lfm_table.csv","a")
+        for currentFileName in fileList: 
+            currentFile = open(RAW_DATA_PATH +currentFileName,"r")
+            for line in currentFile:
+                mergedFile.write(line)
+            currentFile.close()
+        mergedFile.close()    
         self.actionDetailsTxt.SetLabel("Waiting for action")
         #some logic here
     def onUploadPressed(self, btnEvent):
@@ -171,7 +180,7 @@ class MainWindow(wx.Frame):
                 os.makedirs('raw_data')
                 sleep(2)
             for CDate in range(len(ListofDate)):
-                CurrentName='.\\raw_data\\'+str(ListofDate[CDate][1])+'.csv'
+                CurrentName=RAW_DATA_PATH+str(ListofDate[CDate][1])+'.csv'
                 Timer+=1
                 wx.CallAfter(self.gauge.SetValue,Timer)
                 if os.path.exists(CurrentName)==False:
