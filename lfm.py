@@ -6,10 +6,10 @@ import os
 import wx
 import thread
 
-API_KEY =    "e09f752b88d2e0d7d71b8f178d931970" 
+API_KEY =    ("e09f752b88d2e0d7d71b8f178d931970","e09f752b88d2e0d7d71b8f178d931970")
 API_SECRET = "8562cb7ab597776e0f92cabf6fc19dda"
-Metro_URL = "http://ws.audioscrobbler.com/2.0/?method=geo.getmetros&api_key="+API_KEY
-Dates_URL = "http://ws.audioscrobbler.com/2.0/?method=geo.getmetroweeklychartlist&api_key="+API_KEY
+Metro_URL = "http://ws.audioscrobbler.com/2.0/?method=geo.getmetros&api_key="+API_KEY[1]
+Dates_URL = "http://ws.audioscrobbler.com/2.0/?method=geo.getmetroweeklychartlist&api_key="+API_KEY[0]
 RAW_DATA_PATH = ".\\raw_data\\"
   
 def duration2min(time):
@@ -35,7 +35,6 @@ def retriveDates():
 
 def listoftime():
     List_of_Dates=retriveDates()
-    LIST_OF_Metroes=retriveListOfMetroes()
     try:
         ListofDate
     except NameError:
@@ -155,25 +154,25 @@ class MainWindow(wx.Frame):
     def Download(self,Start,End):
         self.stopBtnPressed = False #when user clicks download, it is not possible that stop button pressed concurrently
         numberOfFilesToDownload = End - Start
-        wx.CallAfter(self.gauge.SetRange,numberOfFilesToDownload+4)
+        wx.CallAfter(self.gauge.SetRange,(numberOfFilesToDownload+1)*214+3)
         wx.CallAfter(self.actionDetailsTxt.SetLabel,"Retrieving list of available weeks")
         wx.CallAfter(self.gauge.SetValue,1)
         ListofDates=listoftime()
-        start,end=0,0
+        start,end=-1,-1
         for CDate in range(len(ListofDates)):
             if ListofDates[CDate][1]==int(Start):
                 start=CDate
             if ListofDates[CDate][1]==int(End):
                 end=CDate+1
-        if start==0:
+        if start==-1:
             wx.MessageBox("The start date is incorrect or non existant","Error",wx.OK | wx.ICON_INFORMATION)
-        elif end==0:
+        elif end==-1:
             wx.MessageBox("The end date is incorrect or non existant","Error",wx.OK | wx.ICON_INFORMATION)
         else:
             wx.CallAfter(self.actionDetailsTxt.SetLabel,"Retrieving list of metros")
             wx.CallAfter(self.gauge.SetValue,2)
             LIST_OF_Metroes=retriveListOfMetroes()
-            Timer=2            
+            Timer=3            
             ListofDate=ListofDates[start:end]
             if not os.path.exists('raw_data'):
                 wx.CallAfter(self.actionDetailsTxt.SetLabel,"Creating raw_data directory")
@@ -181,22 +180,23 @@ class MainWindow(wx.Frame):
                 sleep(2)
             for CDate in range(len(ListofDate)):
                 CurrentName=RAW_DATA_PATH+str(ListofDate[CDate][1])+'.csv'
-                Timer+=1
-                wx.CallAfter(self.gauge.SetValue,Timer)
+                
                 if os.path.exists(CurrentName)==False:
                     f = open(CurrentName, 'w')
                     for CurrentMetro in LIST_OF_Metroes:
+                        Timer+=1
+                        wx.CallAfter(self.gauge.SetValue,Timer)
                         wx.CallAfter(self.actionDetailsTxt.SetLabel,"downloading "+CurrentName+" metro: "+CurrentMetro[0])
                         if self.stopBtnPressed:
                             break
-                        urlm = str("http://ws.audioscrobbler.com/2.0/?method=geo.getmetrotrackchart&country="+str(CurrentMetro[1])+"&metro="+str(CurrentMetro[0])+"&start="+str(ListofDate[CDate][0])+"&end="+str(int(ListofDate[CDate][0])+604800)+"&limit=20&api_key="+str(API_KEY))
+                        urlm = str("http://ws.audioscrobbler.com/2.0/?method=geo.getmetrotrackchart&country="+str(CurrentMetro[1])+"&metro="+str(CurrentMetro[0])+"&start="+str(ListofDate[CDate][0])+"&end="+str(int(ListofDate[CDate][0])+604800)+"&limit=20&api_key="+str(API_KEY[Timer%2]))
                         ufile = urllib.urlopen(urlm)
-                        sleep(1.1)
+                        sleep(0.5)
                         html_page = ufile.read()
                         tmpList = re.findall(u'<track rank="[\w]*">[.\s]*<name>(.+)</name>[.\s]*<duration>([0-9]+)</duration>[.\s]*<listeners>([0-9]*)</listeners>[^"]*.*[\s]*<artist>[\s]*<name>(.*)</name>',html_page)
                         if tmpList:
                             for i in range(len(tmpList)):
-                                f.write(str(ListofDate[CDate][1])+' , '+'"'+tmpList[i][0]+'"'+' , '+'"'+tmpList[i][3]+'"'+' , '+duration2min(tmpList[i][1])+' , '+str(i+1)+' , '+str(tmpList[i][2])+' , '+'"'+CurrentMetro[0]+'"'+' , '+'"'+CurrentMetro[1]+'"'+'\n')
+                                f.write(str(ListofDate[CDate][1])+'|'+tmpList[i][0]+'|'+tmpList[i][3]+'|'+duration2min(tmpList[i][1])+'|'+str(i+1)+'|'+str(tmpList[i][2])+'|'+CurrentMetro[0]+'|'+CurrentMetro[1]+'\n')
                     f.close()
                     if self.stopBtnPressed:
                         wx.CallAfter(self.actionDetailsTxt.SetLabel,"Downloading stopped by user!!!")
@@ -211,6 +211,7 @@ class MainWindow(wx.Frame):
                         wx.CallAfter(self.actionDetailsTxt.SetLabel,"Finished downloading: "+CurrentName)
                         sleep(1.5)
                 else:
+                    Timer+=214
                     wx.CallAfter(self.gauge.SetValue,Timer)
                     wx.CallAfter(self.actionDetailsTxt.SetLabel,"File: "+CurrentName+" already exists! Skipping...")
                     sleep(1)
