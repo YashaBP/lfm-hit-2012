@@ -5,13 +5,16 @@ import re
 import os
 import wx
 import thread
+import webbrowser
 
 API_KEY =    ("e09f752b88d2e0d7d71b8f178d931970","e09f752b88d2e0d7d71b8f178d931970")
 API_SECRET = "8562cb7ab597776e0f92cabf6fc19dda"
 Metro_URL = "http://ws.audioscrobbler.com/2.0/?method=geo.getmetros&api_key="+API_KEY[1]
 Dates_URL = "http://ws.audioscrobbler.com/2.0/?method=geo.getmetroweeklychartlist&api_key="+API_KEY[0]
 RAW_DATA_PATH = ".\\raw_data\\"
-  
+TABLE_FILE_NAME = "lfm_table.csv"
+
+
 def duration2min(time):
     totalTime = int(time)/60
     seconds = int(time)%60
@@ -80,8 +83,8 @@ class MainWindow(wx.Frame):
         self.actionDetailsTxt = wx.StaticText(pnl, label = "waiting for action...")
         self.downloadBtn = wx.Button(pnl,id=wx.ID_DOWN, label = "Download")
         self.stopBtn = wx.Button(pnl,id=wx.ID_CANCEL, label = "Stop")
-        self.mergeBtn = wx.Button(pnl,id=wx.ID_REFRESH,label = "Merge to 'table.csv'")
-        self.uploadBtn = wx.Button(pnl,id=wx.ID_UP, label = "Upload to fusion tables")
+        self.mergeBtn = wx.Button(pnl,id=wx.ID_REFRESH,label = "Merge to '"+TABLE_FILE_NAME+"'")
+        self.uploadBtn = wx.Button(pnl,id=wx.ID_UP, label = "Run visualization")
         #Text Controls
         self.fromTextBox = wx.TextCtrl(pnl,style = wx.TE_CENTRE)
         self.endTextBox = wx.TextCtrl(pnl, style = wx.TE_CENTRE)
@@ -114,10 +117,10 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.onDownloadPressed, self.downloadBtn)
         self.Bind(wx.EVT_BUTTON, self.onStopPressed, self.stopBtn)
         self.Bind(wx.EVT_BUTTON, self.onMergePressed,self.mergeBtn)
-        self.Bind(wx.EVT_BUTTON, self.onUploadPressed,self.uploadBtn)
+        self.Bind(wx.EVT_BUTTON, self.onVisualizationPressed,self.uploadBtn)
         #window properties
         self.SetSize((500,230))
-        self.SetTitle("Last.fm downloader")
+        self.SetTitle("Last.fm data downloader")
         self.Centre()
         self.Show(True)
     def onDownloadPressed(self,btnEvent):
@@ -131,11 +134,11 @@ class MainWindow(wx.Frame):
         self.stopBtnPressed = True
     def onMergePressed(self, btnEvent):
         #merging all files from .\raw_data to .\table.csv
-        self.actionDetailsTxt.SetLabel("Merging to table.csv")
+        self.actionDetailsTxt.SetLabel("Merging to "+TABLE_FILE_NAME)
         self.actionDetailsTxt.Update()
         sleep(1)
         fileList = os.listdir(RAW_DATA_PATH)
-        mergedFile = open(".\\lfm_table.csv","a")
+        mergedFile = open(".\\"+TABLE_FILE_NAME,"a")
         for currentFileName in fileList: 
             currentFile = open(RAW_DATA_PATH +currentFileName,"r")
             for line in currentFile:
@@ -144,11 +147,12 @@ class MainWindow(wx.Frame):
         mergedFile.close()    
         self.actionDetailsTxt.SetLabel("Waiting for action")
         #some logic here
-    def onUploadPressed(self, btnEvent):
+    def onVisualizationPressed(self, btnEvent):
         #Upload .\table.csv to google fusion tables
-        self.actionDetailsTxt.SetLabel('Uploading to Google...')
+        self.actionDetailsTxt.SetLabel('Starting visualization...')
         self.actionDetailsTxt.Update()
-        sleep(2)
+        sleep(1)
+        webbrowser.open_new(".\\Visualization\\start.html")
         self.actionDetailsTxt.SetLabel("Waiting for action")
         #some logic here        
     def Download(self,Start,End):
