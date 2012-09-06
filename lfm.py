@@ -139,6 +139,7 @@ class MainWindow(wx.Frame):
         sleep(1)
         fileList = os.listdir(RAW_DATA_PATH)
         mergedFile = open(".\\"+TABLE_FILE_NAME,"a")
+        mergedFile.write("Date|Song name|Artist name|Song running time|Song position|Unique listeners|Metro name|Country name\n")
         for currentFileName in fileList: 
             currentFile = open(RAW_DATA_PATH +currentFileName,"r")
             for line in currentFile:
