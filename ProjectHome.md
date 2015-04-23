@@ -1,0 +1,1 @@
+This is final project in Basics of information systems course that is taught at HIT, Israel.
